@@ -6,29 +6,29 @@
 #include <vector>
 
 const int ANTIALIASING_LEVEL = 8;
-const int WIN_SIZE = 600;
+const sf::Vector2f WIN_SIZE = sf::Vector2f(800, 600);
 const std::string TITLE = "Car";
 const std::string CAR_FILE = "images/car.png";
 const std::string WHEEL_FILE = "images/wheel.png";
-const float MAX_VELOCITY = 0.2;
-const float BOOST = 0.0001;
+const float MAX_VELOCITY = 0.5;
+const float BOOST = 0.0005;
 
 //        car sizes   ///////////////////////////////////
 const struct
 {
-	int LENGTH = 207;
-	int FRONT_WHEEL_CENTER = 34;
-	int BACK_WHEEL_CENTER = 155;
-	int WHEEL_RADIUS = 14;
+	float LENGTH = 207.f;
+	float WHEEL_RADIUS = 14;
 } CAR_IMAGE;
 ////////////////////////////////////////////////////////////
 
 //        map            ///////////////////////////////////
-const struct
+struct
 {
-	float START = WIN_SIZE - CAR_IMAGE.LENGTH;
+	float START = WIN_SIZE.x - CAR_IMAGE.LENGTH;
 	float STOP = 0.f;
 	float HEIGHT = 250.f;
+	sf::Vector2f FRONT_WHEEL_POS = sf::Vector2f(607.f, 282.f);
+	sf::Vector2f BACK_WHEEL_POS = sf::Vector2f(728.f, 282.f);
 } MAP;
 ////////////////////////////////////////////////////////////
 
@@ -50,15 +50,20 @@ struct velocity_init
 
 	void setVelocity(sf::Vector2f position)
 	{
-		if (position.x >= MAP.START)
+		if (position.x + (velocity * velocity / 2 / boost) >= MAP.START)
 			direction = LEFT;
-		if (position.x <= MAP.STOP)
+		if (position.x + (velocity * velocity / 2 / boost) <= MAP.STOP)
 			direction = RIGHT;
 
 		boost = (direction == LEFT) ? -BOOST : BOOST;
 		
 		if (abs(velocity + boost) <= MAX_VELOCITY)
 			velocity += boost;
+	}
+
+	void setAngle()
+	{
+
 	}
 
 };
@@ -96,11 +101,16 @@ int main()
 {
 	velocity_init Velocity;
 	sprite_init Car(CAR_FILE);
+	sprite_init Front_wheel(WHEEL_FILE);
+    sprite_init Back_wheel(WHEEL_FILE);
+
 	Car.updateSprite(sf::Vector2f(MAP.START, MAP.HEIGHT), 0.f);
+	Front_wheel.updateSprite(MAP.FRONT_WHEEL_POS, 0.f);
+	Back_wheel.updateSprite(MAP.BACK_WHEEL_POS, 0.f);
 
 	sf::ContextSettings settings;
 	settings.antialiasingLevel = ANTIALIASING_LEVEL;
-	sf::RenderWindow window(sf::VideoMode(WIN_SIZE, WIN_SIZE), TITLE, sf::Style::Default, settings);
+	sf::RenderWindow window(sf::VideoMode(WIN_SIZE.x, WIN_SIZE.y), TITLE, sf::Style::Default, settings);
 
 	while (window.isOpen())
 	{
@@ -113,9 +123,12 @@ int main()
 
 		Velocity.setVelocity(Car.position);
 		Car.updateSprite(sf::Vector2f(Velocity.velocity, 0.f), 0.f);
+		Front_wheel.updateSprite(sf::Vector2f(Velocity.velocity, 0.f), 0.f);
+		Back_wheel.updateSprite(sf::Vector2f(Velocity.velocity, 0.f), 0.f);
 
 		window.draw(Car.sprite);
-		
+		window.draw(Front_wheel.sprite);
+		window.draw(Back_wheel.sprite);
 		window.display();
 
 	}
