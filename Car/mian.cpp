@@ -11,24 +11,19 @@ const std::string TITLE = "Car";
 const std::string CAR_FILE = "images/car.png";
 const std::string WHEEL_FILE = "images/wheel.png";
 const float MAX_VELOCITY = 0.5;
-const float BOOST = 0.0005;
-
-//        car sizes   ///////////////////////////////////
-const struct
-{
-	float LENGTH = 207.f;
-	float WHEEL_RADIUS = 14;
-} CAR_IMAGE;
-////////////////////////////////////////////////////////////
+const float BOOST = float(0.0005);
+const float CAR_LENGTH = 207.f;
 
 //        map            ///////////////////////////////////
-struct
+const struct
 {
-	float START = WIN_SIZE.x - CAR_IMAGE.LENGTH;
+	float START = WIN_SIZE.x - CAR_LENGTH;
 	float STOP = 0.f;
 	float HEIGHT = 250.f;
-	sf::Vector2f FRONT_WHEEL_POS = sf::Vector2f(607.f, 282.f);
-	sf::Vector2f BACK_WHEEL_POS = sf::Vector2f(728.f, 282.f);
+	float WHEEL_RADIUS = 17;
+	sf::Vector2f FRONT_WHEEL_POS = sf::Vector2f(629.f, 300.f);
+	sf::Vector2f BACK_WHEEL_POS = sf::Vector2f(751.f, 300.f);
+	sf::Vector2f WHEEL_CENTER = sf::Vector2f(22.f, 19.f);
 } MAP;
 ////////////////////////////////////////////////////////////
 
@@ -59,11 +54,8 @@ struct velocity_init
 		
 		if (abs(velocity + boost) <= MAX_VELOCITY)
 			velocity += boost;
-	}
 
-	void setAngle()
-	{
-
+		angle_velocity = velocity * 90.f / MAP.WHEEL_RADIUS;
 	}
 
 };
@@ -76,13 +68,16 @@ struct sprite_init
 	sf::Sprite sprite;
 	sf::Vector2f position;
 	float angle;
+
+	sprite_init(){}
 	
-	sprite_init(std::string texture_file)
+	void setSprite(std::string texture_file, sf::Vector2f center)
 	{
 		texture.loadFromFile(texture_file);
 		sprite.setTexture(texture);
 		position = sf::Vector2f(0, 0);
 		angle = 0.f;
+		sprite.setOrigin(center);
 	}
 
 	void updateSprite(sf::Vector2f move, float rotation)
@@ -96,21 +91,49 @@ struct sprite_init
 };
 ////////////////////////////////////////////////////////////
 
+//          shapes         /////////////////////////////////
+struct Init
+{
+	velocity_init Velocity;
+	sprite_init Car;
+	sprite_init Front_wheel;
+	sprite_init Back_wheel;
+
+	Init()
+	{
+		Car.setSprite(CAR_FILE, sf::Vector2f(0, 0));
+		Front_wheel.setSprite(WHEEL_FILE, MAP.WHEEL_CENTER);
+		Back_wheel.setSprite(WHEEL_FILE, MAP.WHEEL_CENTER);
+
+		Car.updateSprite(sf::Vector2f(MAP.START, MAP.HEIGHT), 0.f);
+		Front_wheel.updateSprite(MAP.FRONT_WHEEL_POS, 0.f);
+		Back_wheel.updateSprite(MAP.BACK_WHEEL_POS, 0.f);
+	}
+
+	void update()
+	{
+		Velocity.setVelocity(Car.position);
+		Car.updateSprite(sf::Vector2f(Velocity.velocity, 0.f), 0.f);
+		Front_wheel.updateSprite(sf::Vector2f(Velocity.velocity, 0.f), Velocity.angle_velocity);
+		Back_wheel.updateSprite(sf::Vector2f(Velocity.velocity, 0.f), Velocity.angle_velocity);
+	}
+
+	void drawShapes(sf::RenderWindow &window)
+	{
+		window.draw(Car.sprite);
+		window.draw(Front_wheel.sprite);
+		window.draw(Back_wheel.sprite);
+	}
+};
+////////////////////////////////////////////////////////////
 
 int main()
 {
-	velocity_init Velocity;
-	sprite_init Car(CAR_FILE);
-	sprite_init Front_wheel(WHEEL_FILE);
-    sprite_init Back_wheel(WHEEL_FILE);
-
-	Car.updateSprite(sf::Vector2f(MAP.START, MAP.HEIGHT), 0.f);
-	Front_wheel.updateSprite(MAP.FRONT_WHEEL_POS, 0.f);
-	Back_wheel.updateSprite(MAP.BACK_WHEEL_POS, 0.f);
+	Init init;
 
 	sf::ContextSettings settings;
 	settings.antialiasingLevel = ANTIALIASING_LEVEL;
-	sf::RenderWindow window(sf::VideoMode(WIN_SIZE.x, WIN_SIZE.y), TITLE, sf::Style::Default, settings);
+	sf::RenderWindow window(sf::VideoMode(int(WIN_SIZE.x), int(WIN_SIZE.y)), TITLE, sf::Style::Default, settings);
 
 	while (window.isOpen())
 	{
@@ -121,14 +144,9 @@ int main()
 
 		window.clear(sf::Color::Magenta);
 
-		Velocity.setVelocity(Car.position);
-		Car.updateSprite(sf::Vector2f(Velocity.velocity, 0.f), 0.f);
-		Front_wheel.updateSprite(sf::Vector2f(Velocity.velocity, 0.f), 0.f);
-		Back_wheel.updateSprite(sf::Vector2f(Velocity.velocity, 0.f), 0.f);
+		init.update();
+		init.drawShapes(window);
 
-		window.draw(Car.sprite);
-		window.draw(Front_wheel.sprite);
-		window.draw(Back_wheel.sprite);
 		window.display();
 
 	}
