@@ -6,13 +6,14 @@
 #include <vector>
 
 const int ANTIALIASING_LEVEL = 8;
-const sf::Vector2f WIN_SIZE = sf::Vector2f(800, 600);
+const sf::Vector2f WIN_SIZE = { 800.f, 600.f };
 const std::string TITLE = "Car";
 const std::string CAR_FILE = "images/car.png";
 const std::string WHEEL_FILE = "images/wheel.png";
-const float MAX_VELOCITY = 0.5;
-const float BOOST = float(0.0005);
-const float CAR_LENGTH = 207.f;
+const float MAX_VELOCITY = 0.5f;
+const float BOOST = 0.0005f;
+const float CAR_LENGTH = 300.f;
+const float pi = 3.14f;
 
 //        map            ///////////////////////////////////
 const struct
@@ -20,10 +21,10 @@ const struct
 	float START = WIN_SIZE.x - CAR_LENGTH;
 	float STOP = 0.f;
 	float HEIGHT = 250.f;
-	float WHEEL_RADIUS = 17;
-	sf::Vector2f FRONT_WHEEL_POS = sf::Vector2f(629.f, 300.f);
-	sf::Vector2f BACK_WHEEL_POS = sf::Vector2f(751.f, 300.f);
-	sf::Vector2f WHEEL_CENTER = sf::Vector2f(22.f, 19.f);
+	float WHEEL_RADIUS = 30.f;
+	sf::Vector2f FRONT_WHEEL_POS = { 540.f, 345.f };
+	sf::Vector2f BACK_WHEEL_POS = { 745.f, 345.f };
+	sf::Vector2f WHEEL_CENTER = { 30.f, 30.f };
 } MAP;
 ////////////////////////////////////////////////////////////
 
@@ -51,11 +52,11 @@ struct velocity_init
 			direction = RIGHT;
 
 		boost = (direction == LEFT) ? -BOOST : BOOST;
-		
+
 		if (abs(velocity + boost) <= MAX_VELOCITY)
 			velocity += boost;
 
-		angle_velocity = velocity * 90.f / MAP.WHEEL_RADIUS;
+		angle_velocity = velocity * 180 / pi / MAP.WHEEL_RADIUS;
 	}
 
 };
@@ -69,8 +70,8 @@ struct sprite_init
 	sf::Vector2f position;
 	float angle;
 
-	sprite_init(){}
-	
+	sprite_init() {}
+
 	void setSprite(std::string texture_file, sf::Vector2f center)
 	{
 		texture.loadFromFile(texture_file);
@@ -98,6 +99,7 @@ struct Init
 	sprite_init Car;
 	sprite_init Front_wheel;
 	sprite_init Back_wheel;
+	sf::RectangleShape road;
 
 	Init()
 	{
@@ -108,6 +110,10 @@ struct Init
 		Car.updateSprite(sf::Vector2f(MAP.START, MAP.HEIGHT), 0.f);
 		Front_wheel.updateSprite(MAP.FRONT_WHEEL_POS, 0.f);
 		Back_wheel.updateSprite(MAP.BACK_WHEEL_POS, 0.f);
+
+		road.setPosition(0.f, MAP.FRONT_WHEEL_POS.y + MAP.WHEEL_RADIUS);
+		road.setSize(WIN_SIZE);
+		road.setFillColor(sf::Color::Black);
 	}
 
 	void update()
@@ -120,6 +126,7 @@ struct Init
 
 	void drawShapes(sf::RenderWindow &window)
 	{
+		window.draw(road);
 		window.draw(Car.sprite);
 		window.draw(Front_wheel.sprite);
 		window.draw(Back_wheel.sprite);
@@ -142,7 +149,7 @@ int main()
 			if (event.type == sf::Event::Closed)
 				window.close();
 
-		window.clear(sf::Color::Magenta);
+		window.clear(sf::Color::White);
 
 		init.update();
 		init.drawShapes(window);
